@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,10 @@ import {
 } from "react-native";
 import restaurants from "../../data/restaurants";
 
-const MenuScreen = () => {
+const MenuScreen = ({ navigation }) => {
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
-  const [showCart, setShowCart] = useState(false);
 
   const addToCart = (dish) => {
     setCart([...cart, dish]);
@@ -56,22 +55,6 @@ const MenuScreen = () => {
         <Text style={styles.menuPrice}>${item.price.toFixed(2)}</Text>
       </View>
     </TouchableOpacity>
-  );
-
-  const renderCartItem = ({ item }) => (
-    <View style={styles.cartItem}>
-      <Image source={{ uri: item.image }} style={styles.cartItemImage} />
-      <View style={styles.cartItemInfo}>
-        <Text style={styles.cartItemName}>{item.name}</Text>
-        <Text style={styles.cartItemDetails}>${item.price.toFixed(2)}</Text>
-      </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={() => removeFromCart(item)}
-      >
-        <Text style={styles.removeButtonText}>remove</Text>
-      </TouchableOpacity>
-    </View>
   );
 
   return (
@@ -124,34 +107,18 @@ const MenuScreen = () => {
       )}
 
       {cart.length > 0 && (
-        <>
-          <TouchableOpacity
-            style={styles.viewCartButton}
-            onPress={() => setShowCart(!showCart)}
-          >
-            <Text style={styles.viewCartText}>
-              {showCart ? "Hide Cart" : "View Cart"}
-            </Text>
-          </TouchableOpacity>
-
-          {showCart && (
-            <View style={styles.cartSummary}>
-              <Text style={styles.cartTitle}>Cart</Text>
-              <FlatList
-                data={cart}
-                renderItem={renderCartItem}
-                keyExtractor={(item) => item.id.toString()}
-                showsVerticalScrollIndicator={false}
-              />
-              <View style={styles.totalSection}>
-                <Text style={styles.totalText}>Total: ${calculateTotal()}</Text>
-                <TouchableOpacity style={styles.checkoutButton}>
-                  <Text style={styles.checkoutText}>Proceed to Checkout</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </>
+        <TouchableOpacity
+          style={styles.viewCartButton}
+          onPress={() =>
+            navigation.navigate("CartScreen", {
+              cart,
+              removeFromCart,
+              calculateTotal,
+            })
+          }
+        >
+          <Text style={styles.viewCartText}>View Cart ({cart.length})</Text>
+        </TouchableOpacity>
       )}
     </View>
   );

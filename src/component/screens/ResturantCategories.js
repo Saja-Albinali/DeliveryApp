@@ -6,30 +6,57 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import restaurantCategories from "../../data/categories"; 
+import { useQuery } from "@tanstack/react-query";
+import { getAllCategories } from "../../api/resturants";
 
 export default function FoodCategories() {
   const navigation = useNavigation();
+
+  const {
+    data: categories,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getAllCategories,
+  });
+
+  if (isLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="purple" />
+        <Text style={styles.loaderText}>Loading Categories...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load categories.</Text>
+      </View>
+    );
+  }
 
   const renderCategoryCard = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate("RestaurantList", { category: item })}
     >
-      <Image source={{ uri: item.categoryImage }} style={styles.cardImage} />
-      <Text style={styles.cardText}>{item.categoryName}</Text>
+      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      <Text style={styles.cardText}>{item.name}</Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Food Categories</Text>
       <FlatList
-        data={restaurantCategories}
+        data={categories}
         renderItem={renderCategoryCard}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id.toString()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.list}
       />
@@ -73,5 +100,26 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     color: "#333",
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9F5F0",
+  },
+  loaderText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#555",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9F5F0",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
   },
 });

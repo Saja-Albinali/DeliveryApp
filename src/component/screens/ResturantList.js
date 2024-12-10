@@ -6,21 +6,61 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
-import restaurants from "../../data/restaurants";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getAllResturants,
+  getAllRestaurantsItems,
+  getItemDetails,
+} from "../../api/resturants";
 
 export default function RestaurantList({ route, navigation }) {
   const { category } = route.params;
 
-  // Filter restaurants by category
+  const {
+    data: restaurants = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["restaurants"],
+    queryFn: getAllResturants,
+  });
+
+  if (isLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="purple" />
+        <Text style={styles.loaderText}>Loading restaurants...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load restaurants</Text>
+      </View>
+    );
+  }
+
   const filteredRestaurants = restaurants.filter(
     (restaurant) => restaurant.category === category.categoryName
   );
 
+  const handleRestaurantPress = async (restaurantId) => {
+    try {
+      const restaurantDetails = await getAllRestaurantsItems(restaurantId);
+      navigation.navigate("MenuScreen", { restaurant: restaurantDetails });
+    } catch (err) {
+      console.error("Error fetching restaurant details:", err);
+    }
+  };
+
   const renderRestaurantCard = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate("MenuScreen", { restaurant: item })}
+      onPress={() => handleRestaurantPress(item._id)} 
     >
       <Image source={{ uri: item.image }} style={styles.cardImage} />
       <View style={styles.info}>
@@ -38,7 +78,7 @@ export default function RestaurantList({ route, navigation }) {
       <FlatList
         data={filteredRestaurants}
         renderItem={renderRestaurantCard}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item._id.toString()}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -83,5 +123,24 @@ const styles = StyleSheet.create({
   details: {
     fontSize: 14,
     color: "#555",
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loaderText: {
+    fontSize: 16,
+    marginTop: 10,
+    color: "#555",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
   },
 });
